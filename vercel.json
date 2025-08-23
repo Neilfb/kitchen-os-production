@@ -1,0 +1,76 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd apps/allerq && npm run build",
+  "devCommand": "cd apps/allerq && npm run dev",
+  "installCommand": "npm install",
+  "outputDirectory": "apps/allerq/.next",
+  "regions": ["lhr1"],
+  "github": {
+    "silent": true
+  },
+  "functions": {
+    "apps/allerq/src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/((?!api/.*).*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "x-middleware-skip-auth",
+          "value": "1"
+        },
+        {
+          "key": "x-middleware-bypass",
+          "value": "1"
+        },
+        {
+          "key": "x-vercel-protection-bypass",
+          "value": "${VERCEL_PROTECTION_BYPASS}"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods", 
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-Requested-With, Content-Type, Accept, Authorization, x-vercel-protection-bypass"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "x-middleware-skip-auth",
+          "value": "1"
+        },
+        {
+          "key": "x-middleware-bypass",
+          "value": "1"
+        }
+      ]
+    }
+  ]
+}

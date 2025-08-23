@@ -1,0 +1,67 @@
+// Analytics API endpoint
+import { NextResponse } from "next/server";
+import { createOptionsResponse, createApiResponse } from "@/lib/api-utils";
+
+// Handle CORS preflight requests
+export async function OPTIONS() {
+  return createOptionsResponse();
+}
+
+export async function GET() {
+  // Demo mode response when no API keys are set
+  if (!process.env.NOCODEBACKEND_SECRET_KEY) {
+    return createApiResponse([
+      {
+        id: "demo-analytics-1",
+        event: "page_view",
+        page: "/menu/123",
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        userId: "anonymous-1",
+        restaurantId: "demo-restaurant-1"
+      },
+      {
+        id: "demo-analytics-2",
+        event: "menu_item_click",
+        itemId: "dish-456",
+        timestamp: new Date(Date.now() - 43200000).toISOString(),
+        userId: "anonymous-2",
+        restaurantId: "demo-restaurant-1"
+      },
+      {
+        id: "demo-analytics-3",
+        event: "page_view",
+        page: "/menu/123",
+        timestamp: new Date(Date.now() - 21600000).toISOString(),
+        userId: "anonymous-3",
+        restaurantId: "demo-restaurant-1"
+      }
+    ]);
+  }
+
+  try {
+    const baseUrl = process.env.NOCODEBACKEND_BASE_URL || 'https://api.nocodebackend.com/api';
+    const apiKey = process.env.NOCODEBACKEND_SECRET_KEY || 'demo-mode-key-for-vercel-deployment';
+    
+    // Make a direct fetch call to avoid dependency on noCodeBackendFetch
+    const response = await fetch(`${baseUrl}/analytics`, {
+      method: "GET",
+      headers: {
+        "x-api-key": apiKey,
+        "Content-Type": "application/json"
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch analytics: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return createApiResponse(data);
+  } catch (error) {
+    console.error("Failed to fetch analytics", error);
+    return createApiResponse(
+      { error: "Failed to fetch analytics" },
+      500
+    );
+  }
+}

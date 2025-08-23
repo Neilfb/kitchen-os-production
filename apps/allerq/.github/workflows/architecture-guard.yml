@@ -1,0 +1,196 @@
+name: Architecture Guard
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**/*.ts'
+      - 'src/**/*.tsx'
+      - 'src/**/*Service*'
+      - 'src/hooks/**/*'
+      - 'src/lib/services/**/*'
+  push:
+    branches: [ main ]
+
+jobs:
+  architecture-check:
+    runs-on: ubuntu-latest
+    name: Architecture Conflict Detection
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Install analysis dependencies
+      run: npm install -g glob
+      
+    - name: Run Service Conflict Analysis
+      id: conflict-check
+      run: |
+        echo "🔍 Running service conflict analysis..."
+        npm run check-service-conflicts > analysis-report.txt 2>&1
+        
+        # Check if conflicts were found
+        if grep -q "🚨 Found" analysis-report.txt; then
+          echo "conflicts=true" >> $GITHUB_OUTPUT
+          echo "❌ Service conflicts detected!"
+          cat analysis-report.txt
+          exit 1
+        else
+          echo "conflicts=false" >> $GITHUB_OUTPUT
+          echo "✅ No service conflicts detected"
+          cat analysis-report.txt
+        fi
+        
+    - name: Run Architecture Linting
+      run: |
+        echo "🔍 Running architecture linting..."
+        npm run lint:architecture
+        
+    - name: Validate Service Ownership
+      run: |
+        echo "📋 Validating service ownership documentation..."
+        
+        # Check if SERVICE_OWNERSHIP.md is up to date
+        if [ ! -f "docs/SERVICE_OWNERSHIP.md" ]; then
+          echo "❌ SERVICE_OWNERSHIP.md not found!"
+          exit 1
+        fi
+        
+        # Check if new services are documented
+        NEW_SERVICES=$(find src -name "*Service*.ts" -o -name "*service*.ts" | wc -l)
+        DOCUMENTED_SERVICES=$(grep -c "Primary Service\|Service:" docs/SERVICE_OWNERSHIP.md || echo "0")
+        
+        echo "Found $NEW_SERVICES service files"
+        echo "Documented $DOCUMENTED_SERVICES services"
+        
+        if [ $NEW_SERVICES -gt $((DOCUMENTED_SERVICES + 2)) ]; then
+          echo "⚠️ Potential undocumented services detected"
+          echo "Please update docs/SERVICE_OWNERSHIP.md"
+          exit 1
+        fi
+        
+    - name: Check for Deprecated Service Usage
+      run: |
+        echo "🔍 Checking for deprecated service usage..."
+        
+        # List of deprecated services that should not be used
+        DEPRECATED_SERVICES=(
+          "AdminRestaurantService"
+          "FirebaseRestaurantService" 
+          "useFirebaseRestaurants"
+          "AuthContext"
+          "SupabaseAuthContext"
+        )
+        
+        VIOLATIONS_FOUND=false
+        
+        for service in "${DEPRECATED_SERVICES[@]}"; do
+          if grep -r "$service" src/ --include="*.ts" --include="*.tsx" --exclude-dir=node_modules; then
+            echo "❌ Deprecated service '$service' found in codebase!"
+            VIOLATIONS_FOUND=true
+          fi
+        done
+        
+        if [ "$VIOLATIONS_FOUND" = true ]; then
+          echo "❌ Deprecated service usage detected. Please migrate to current services."
+          exit 1
+        else
+          echo "✅ No deprecated service usage found"
+        fi
+        
+    - name: Generate Architecture Report
+      if: always()
+      run: |
+        echo "📊 Generating architecture health report..."
+        
+        cat > architecture-report.md << 'EOF'
+        # Architecture Health Report
+        
+        ## Service Conflict Analysis
+        $(cat analysis-report.txt)
+        
+        ## Service Distribution
+        - Restaurant Services: $(find src -name "*restaurant*Service*.ts" | wc -l)
+        - Menu Services: $(find src -name "*menu*Service*.ts" | wc -l)
+        - Auth Services: $(find src -name "*auth*Service*.ts" -o -name "*Auth*.tsx" | wc -l)
+        - Utility Services: $(find src -name "*Service*.ts" | grep -v -E "(restaurant|menu|auth)" | wc -l)
+        
+        ## Authentication Patterns
+        - Firebase Auth Usage: $(grep -r "useFirebaseAuth\|FirebaseAuth" src/ --include="*.ts" --include="*.tsx" | wc -l) files
+        - Legacy Auth Usage: $(grep -r "useAuth\|AuthContext" src/ --include="*.ts" --include="*.tsx" | grep -v Firebase | wc -l) files
+        
+        ## Recommendations
+        - Maintain single service per domain
+        - Keep service ownership documentation updated
+        - Run architecture checks before major changes
+        EOF
+        
+    - name: Comment PR with Architecture Report
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let report = '';
+          try {
+            report = fs.readFileSync('architecture-report.md', 'utf8');
+          } catch (error) {
+            report = '❌ Could not generate architecture report';
+          }
+          
+          const conflicts = '${{ steps.conflict-check.outputs.conflicts }}' === 'true';
+          
+          const comment = `
+          ## 🏗️ Architecture Guard Report
+          
+          ${conflicts ? '❌ **Service conflicts detected!**' : '✅ **No service conflicts detected**'}
+          
+          <details>
+          <summary>📊 Detailed Architecture Report</summary>
+          
+          \`\`\`
+          ${report}
+          \`\`\`
+          
+          </details>
+          
+          ${conflicts ? `
+          ### ⚠️ Action Required
+          Service conflicts were detected in this PR. Please:
+          1. Review the conflict analysis above
+          2. Consolidate conflicting services
+          3. Update service ownership documentation
+          4. Re-run the architecture checks
+          ` : ''}
+          
+          ---
+          *This check helps prevent architectural conflicts like the "4 competing restaurant services" issue.*
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+          
+    - name: Upload Analysis Artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: architecture-analysis
+        path: |
+          analysis-report.txt
+          architecture-report.md
+        retention-days: 30

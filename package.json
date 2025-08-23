@@ -1,0 +1,38 @@
+{
+  "name": "kitchen-os-platform",
+  "version": "1.0.0",
+  "description": "Enterprise-grade digital menu platform with AI-powered optimization",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean"
+  },
+  "devDependencies": {
+    "turbo": "^1.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Neilfb/kitchen-os-production.git"
+  },
+  "keywords": [
+    "restaurant",
+    "menu",
+    "qr-code",
+    "allergen",
+    "ai",
+    "analytics"
+  ],
+  "author": "Kitchen OS Team",
+  "license": "MIT"
+}

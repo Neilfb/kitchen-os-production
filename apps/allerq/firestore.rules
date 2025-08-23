@@ -1,0 +1,44 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read and write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can read and write restaurants they own
+    match /restaurants/{restaurantId} {
+      allow read, write: if request.auth != null &&
+        (resource == null || resource.data.ownerId == request.auth.uid);
+      allow create: if request.auth != null &&
+        request.resource.data.ownerId == request.auth.uid;
+    }
+    
+    // Users can read and write menus for restaurants they own
+    match /menus/{menuId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)) &&
+        get(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)).data.ownerId == request.auth.uid;
+    }
+    
+    // Users can read and write menu items for restaurants they own
+    match /menuItems/{itemId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)) &&
+        get(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)).data.ownerId == request.auth.uid;
+    }
+    
+    // Public read access for menu items (for QR code scanning)
+    match /menuItems/{itemId} {
+      allow read: if true;
+    }
+    
+    // Analytics can be written by authenticated users for their restaurants
+    match /analytics/{analyticsId} {
+      allow read, write: if request.auth != null && 
+        exists(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)) &&
+        get(/databases/$(database)/documents/restaurants/$(resource.data.restaurantId)).data.ownerId == request.auth.uid;
+    }
+  }
+}

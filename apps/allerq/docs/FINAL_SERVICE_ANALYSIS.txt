@@ -1,0 +1,109 @@
+🔍 Analyzing codebase for service conflicts...
+
+📊 SERVICE CONFLICT ANALYSIS REPORT
+=====================================
+
+🚨 Found 5 potential service conflicts:
+
+🔴 RESTAURANT DOMAIN CONFLICT (HIGH)
+   Services: 7
+   • serverRestaurantService (service) - src/lib/services/serverRestaurantService.ts
+     Pattern: serviceExport
+     Methods: if, getDb, getRestaurant, if, if...
+   • FirebaseMenuService (service) - src/lib/services/firebaseMenuService.ts
+     Pattern: firebaseService
+     Methods: initializeFirebaseAdmin, if, getAdminDb, if, menusCollection...
+   • firebaseMenuService (service) - src/lib/services/firebaseMenuService.ts
+     Pattern: serviceExport
+     Methods: initializeFirebaseAdmin, if, getAdminDb, if, menusCollection...
+   • ClientRestaurantService (service) - src/lib/services/clientRestaurantService.ts
+     Pattern: clientService
+     Methods: createRestaurant, if, if, if, getRestaurantsByOwner...
+   • clientRestaurantService (service) - src/lib/services/clientRestaurantService.ts
+     Pattern: serviceExport
+     Methods: createRestaurant, if, if, if, getRestaurantsByOwner...
+   • useTeam (hook) - src/hooks/useTeam.ts
+     Pattern: hookService
+     Methods: if, if
+   • useRestaurants (hook) - src/hooks/useRestaurants.ts
+     Pattern: hookService
+     Methods: if, if, if, if, if...
+
+🟡 QR DOMAIN CONFLICT (MEDIUM)
+   Services: 2
+   • useQrCodes (hook) - src/hooks/useQrCodes.ts
+     Pattern: hookService
+     Methods: useCallback, useCallback, useCallback
+   • useCustomizeQr (hook) - src/hooks/useCustomizeQr.ts
+     Pattern: hookService
+     Methods: fetchQrData, if, if, if
+
+🔴 MENU DOMAIN CONFLICT (HIGH)
+   Services: 6
+   • usePublicMenu (hook) - src/hooks/usePublicMenu.ts
+     Pattern: hookService
+     Methods: fetchMenu, if, if, if
+   • useMenus (hook) - src/hooks/useMenus.ts
+     Pattern: hookService
+     Methods: useCallback, useCallback, if, useCallback, if...
+   • useMenuItems (hook) - src/hooks/useMenuItems.ts
+     Pattern: hookService
+     Methods: if, if, if, if, if...
+   • useAllMenuItems (hook) - src/hooks/useMenuItems.ts
+     Pattern: hookService
+     Methods: useMenuItems, if, if, if, if...
+   • useDishSearch (hook) - src/hooks/useDishSearch.ts
+     Pattern: hookService
+     Methods: if
+   • useCategories (hook) - src/hooks/useCategories.ts
+     Pattern: hookService
+
+🟢 UNKNOWN DOMAIN CONFLICT (LOW)
+   Services: 3
+   • useCustomers (hook) - src/hooks/useCustomers.ts
+     Pattern: hookService
+   • useBilling (hook) - src/hooks/useBilling.ts
+     Pattern: hookService
+     Methods: if, if
+   • useAddressVerification (hook) - src/hooks/useAddressVerification.ts
+     Pattern: hookService
+     Methods: useCallback, if, if, useCallback, if...
+
+🟢 ANALYTICS DOMAIN CONFLICT (LOW)
+   Services: 2
+   • useAnalyticsTracking (hook) - src/hooks/useAnalyticsTracking.ts
+     Pattern: hookService
+     Methods: track
+   • useAnalytics (hook) - src/hooks/useAnalytics.ts
+     Pattern: hookService
+
+💡 RECOMMENDATIONS
+==================
+
+RESTAURANT Domain:
+   🔴 CRITICAL: Multiple services with overlapping CRUD operations detected
+   → Consolidate into a single service immediately
+   → Review all usage and migrate to unified service
+
+QR Domain:
+   🟡 WARNING: Multiple services detected with potential overlap
+   → Review service responsibilities and consider consolidation
+
+MENU Domain:
+   🔴 CRITICAL: Multiple services with overlapping CRUD operations detected
+   → Consolidate into a single service immediately
+   → Review all usage and migrate to unified service
+
+UNKNOWN Domain:
+   🟢 INFO: Multiple services detected but minimal overlap
+   → Monitor for future conflicts
+
+ANALYTICS Domain:
+   🟢 INFO: Multiple services detected but minimal overlap
+   → Monitor for future conflicts
+
+📋 NEXT STEPS:
+1. Review each HIGH severity conflict immediately
+2. Create service consolidation plan for MEDIUM conflicts
+3. Document service ownership and responsibilities
+4. Add this check to your CI/CD pipeline
