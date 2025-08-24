@@ -359,10 +359,12 @@ export class PerformanceMonitor {
         vitals.lcp = entries[entries.length - 1]?.startTime;
       }).observe({ entryTypes: ['largest-contentful-paint'] });
 
-      // First Input Delay
+      // First Input Delay - fixed to use correct property
       new PerformanceObserver((list) => {
-        const entries = list.getEntries();
-        vitals.fid = entries[0]?.processingStart - entries[0]?.startTime;
+        const entries = list.getEntries() as any[];
+        if (entries[0]) {
+          vitals.fid = entries[0].processingStart - entries[0].startTime;
+        }
       }).observe({ entryTypes: ['first-input'] });
 
       // Cumulative Layout Shift
