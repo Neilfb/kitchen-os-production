@@ -1,4 +1,47 @@
-import { Restaurant, Menu, MenuItem } from '@kitchen-os/database';
+// Temporary interfaces until database package is available
+interface Restaurant {
+  name: string;
+  description?: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  phone?: string;
+  email?: string;
+  website?: string;
+  logoUrl?: string;
+  id: string;
+  updatedAt: string;
+}
+
+interface Menu {
+  name: string;
+  description?: string;
+  id: string;
+  restaurantId: string;
+  published: boolean;
+  updatedAt: string;
+  sections: Array<{
+    name: string;
+    description?: string;
+    items: string[];
+  }>;
+}
+
+interface MenuItem {
+  name: string;
+  description?: string;
+  price: number;
+  currency: string;
+  allergens: string[];
+  dietaryTags: string[];
+  ingredients: string[];
+  category: string;
+  id: string;
+}
 
 export interface SEOMetadata {
   title: string;
@@ -87,186 +130,6 @@ export class SEOUtils {
   }
 
   /**
-   * Generate SEO metadata for menu page
-   */
-  static generateMenuSEO(restaurant: Restaurant, menu: Menu, menuItems: MenuItem[]): SEOMetadata {
-    const title = `${menu.name} - ${restaurant.name} | Kitchen OS`;
-    const description = menu.description 
-      ? `${menu.description} Browse ${menuItems.length} items with detailed allergen information.`
-      : `Browse ${menu.name} at ${restaurant.name}. ${menuItems.length} items with detailed allergen information and dietary options.`;
-
-    // Extract popular ingredients and categories for keywords
-    const categories = [...new Set(menuItems.map(item => item.category.toLowerCase()))];
-    const popularIngredients = this.extractPopularIngredients(menuItems);
-    const dietaryOptions = [...new Set(menuItems.flatMap(item => item.dietaryTags))];
-
-    const keywords = [
-      restaurant.name.toLowerCase(),
-      menu.name.toLowerCase(),
-      'digital menu',
-      'restaurant menu',
-      'allergen information',
-      ...categories,
-      ...popularIngredients.slice(0, 10),
-      ...dietaryOptions,
-      restaurant.address.city.toLowerCase(),
-      'qr code menu',
-      'contactless dining',
-    ];
-
-    // Generate menu items for structured data
-    const menuItemsStructured = menuItems.slice(0, 20).map(item => ({
-      '@type': 'MenuItem',
-      name: item.name,
-      description: item.description,
-      offers: {
-        '@type': 'Offer',
-        price: item.price,
-        priceCurrency: item.currency,
-      },
-      nutrition: {
-        '@type': 'NutritionInformation',
-        allergens: item.allergens,
-      },
-      suitableForDiet: item.dietaryTags.map(tag => this.mapDietaryTagToSchema(tag)).filter(Boolean),
-    }));
-
-    const structuredData = {
-      '@context': 'https://schema.org',
-      '@type': 'Menu',
-      name: menu.name,
-      description: menu.description,
-      provider: {
-        '@type': 'Restaurant',
-        name: restaurant.name,
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: restaurant.address.street,
-          addressLocality: restaurant.address.city,
-          addressRegion: restaurant.address.state,
-          postalCode: restaurant.address.zipCode,
-          addressCountry: restaurant.address.country,
-        },
-      },
-      hasMenuSection: menu.sections.map(section => ({
-        '@type': 'MenuSection',
-        name: section.name,
-        description: section.description,
-        hasMenuItem: menuItemsStructured.filter(item => 
-          section.items.includes(menuItems.find(mi => mi.name === item.name)?.id || '')
-        ),
-      })),
-    };
-
-    return {
-      title,
-      description,
-      keywords,
-      openGraph: {
-        title,
-        description,
-        type: 'website',
-        siteName: 'Kitchen OS',
-        image: restaurant.logoUrl,
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description,
-        image: restaurant.logoUrl,
-      },
-      structuredData,
-    };
-  }
-
-  /**
-   * Generate sitemap entries for restaurant and menus
-   */
-  static generateSitemapEntries(restaurants: Restaurant[], menus: Menu[]): Array<{
-    url: string;
-    lastModified: Date;
-    changeFrequency: 'daily' | 'weekly' | 'monthly';
-    priority: number;
-  }> {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kitchen-os-web.vercel.app';
-    const entries = [];
-
-    // Restaurant pages
-    restaurants.forEach(restaurant => {
-      entries.push({
-        url: `${baseUrl}/menu/${restaurant.id}`,
-        lastModified: new Date(restaurant.updatedAt),
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      });
-    });
-
-    // Menu pages
-    menus.filter(menu => menu.published).forEach(menu => {
-      entries.push({
-        url: `${baseUrl}/menu/${menu.restaurantId}/${menu.id}`,
-        lastModified: new Date(menu.updatedAt),
-        changeFrequency: 'daily' as const,
-        priority: 0.9,
-      });
-    });
-
-    return entries;
-  }
-
-  /**
-   * Generate robots.txt content
-   */
-  static generateRobotsTxt(): string {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kitchen-os-web.vercel.app';
-    
-    return `User-agent: *
-Allow: /menu/
-Allow: /qr/
-Disallow: /dashboard/
-Disallow: /api/
-Disallow: /_next/
-Disallow: /admin/
-
-Sitemap: ${baseUrl}/sitemap.xml`;
-  }
-
-  /**
-   * Extract popular ingredients from menu items
-   */
-  private static extractPopularIngredients(menuItems: MenuItem[]): string[] {
-    const ingredientCounts = new Map<string, number>();
-
-    menuItems.forEach(item => {
-      item.ingredients.forEach(ingredient => {
-        const normalized = ingredient.toLowerCase().trim();
-        ingredientCounts.set(normalized, (ingredientCounts.get(normalized) || 0) + 1);
-      });
-    });
-
-    return Array.from(ingredientCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .map(([ingredient]) => ingredient)
-      .filter(ingredient => ingredient.length > 2); // Filter out very short ingredients
-  }
-
-  /**
-   * Map dietary tags to schema.org diet types
-   */
-  private static mapDietaryTagToSchema(tag: string): string | null {
-    const mapping: Record<string, string> = {
-      'vegan': 'https://schema.org/VeganDiet',
-      'vegetarian': 'https://schema.org/VegetarianDiet',
-      'gluten-free': 'https://schema.org/GlutenFreeDiet',
-      'dairy-free': 'https://schema.org/DiabeticDiet', // Closest match
-      'halal': 'https://schema.org/HalalDiet',
-      'kosher': 'https://schema.org/KosherDiet',
-    };
-
-    return mapping[tag] || null;
-  }
-
-  /**
    * Generate meta tags for Next.js
    */
   static generateMetaTags(seo: SEOMetadata): Array<{ name?: string; property?: string; content: string }> {
@@ -304,21 +167,5 @@ Sitemap: ${baseUrl}/sitemap.xml`;
   static generateCanonicalUrl(path: string): string {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://kitchen-os-web.vercel.app';
     return `${baseUrl}${path}`;
-  }
-
-  /**
-   * Generate breadcrumb structured data
-   */
-  static generateBreadcrumbStructuredData(breadcrumbs: Array<{ name: string; url: string }>): any {
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: breadcrumbs.map((crumb, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: crumb.name,
-        item: crumb.url,
-      })),
-    };
   }
 }
