@@ -15,6 +15,11 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@kitchen-os/auth": "1.0.0",
+    "@kitchen-os/database": "1.0.0",
+    "@kitchen-os/ui": "1.0.0",
+    "@kitchen-os/utils": "1.0.0",
+    "@kitchen-os/billing": "1.0.0",
     "@hookform/resolvers": "^5.0.1",
     "@playwright/test": "^1.52.0",
     "@radix-ui/react-alert-dialog": "^1.1.14",
