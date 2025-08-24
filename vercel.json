@@ -1,8 +1,8 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd apps/allerq && npm run build",
-  "devCommand": "cd apps/allerq && npm run dev",
-  "installCommand": "npm install",
+  "buildCommand": "cd apps/allerq && yarn build",
+  "devCommand": "cd apps/allerq && yarn dev",
+  "installCommand": "yarn install",
   "outputDirectory": "apps/allerq/.next",
   "regions": ["lhr1"],
   "github": {
