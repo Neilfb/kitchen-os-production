@@ -9,7 +9,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@kitchen-os/database": "workspace:*",
+    "@kitchen-os/database": "1.0.0",
     "firebase": "^10.0.0"
   },
   "devDependencies": {
