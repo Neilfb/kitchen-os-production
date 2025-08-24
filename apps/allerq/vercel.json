@@ -1,9 +1,9 @@
 {
   "framework": "nextjs",
-  "buildCommand": "yarn build",
+  "buildCommand": "cd ../.. && yarn build --filter=allerq-app",
   "outputDirectory": ".next",
   "devCommand": "yarn dev",
-  "installCommand": "yarn install",
+  "installCommand": "cd ../.. && yarn install",
   "regions": ["lhr1"],
   "github": {
     "silent": true
