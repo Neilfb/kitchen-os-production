@@ -18,6 +18,24 @@
     "analytics": "Analytics",
     "settings": "Settings"
   },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password"
+  },
+  "home": {
+    "title": "Kitchen OS - AllerQ",
+    "subtitle": "Professional allergen management for restaurants",
+    "getStarted": "Get Started",
+    "features": {
+      "qrStudio": {
+        "title": "QR Studio",
+        "description": "Create and customize QR codes for your menus"
+      }
+    }
+  },
   "qrCodes": {
     "title": "QR Codes",
     "subtitle": "Generate and manage QR codes for your menus",
@@ -25,5 +43,8 @@
     "generate": "Generate QR Code",
     "preview": "Preview",
     "customization": "Customization"
+  },
+  "language": {
+    "current": "Current"
   }
 }
