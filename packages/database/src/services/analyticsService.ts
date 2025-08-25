@@ -9,7 +9,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
-import { db } from '@kitchen-os/auth';
+import { db } from '../firebase'; // Import from local firebase config
 import { AnalyticsEvent, COLLECTIONS } from '../models';
 
 export interface DashboardMetrics {
@@ -49,7 +49,7 @@ export class AnalyticsService {
       };
       sessionId?: string;
     }
-  ): Promise<void> {
+  : Promise<void> {
     try {
       await addDoc(collection(db, COLLECTIONS.ANALYTICS), {
         restaurantId,
