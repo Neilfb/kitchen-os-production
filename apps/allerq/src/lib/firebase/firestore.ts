@@ -7,7 +7,6 @@
  */
 
 import { 
-  getFirestore, 
   collection, 
   doc, 
   addDoc, 
@@ -24,10 +23,10 @@ import {
   QueryDocumentSnapshot,
   FirestoreError
 } from 'firebase/firestore';
-import { app } from './config';
+import { db } from './config';
 
-// Initialize Firestore
-export const db = getFirestore(app);
+// Export db for compatibility
+export { db };
 
 // Collection names
 export const COLLECTIONS = {
@@ -144,11 +143,17 @@ export async function handleFirestoreOperation<T>(
 
 // Get collection reference with type safety
 export function getTypedCollection(collectionName: string) {
+  if (!db) {
+    throw new Error('Firestore not available');
+  }
   return collection(db, collectionName);
 }
 
 // Get document reference with type safety
 export function getTypedDoc(collectionName: string, docId: string) {
+  if (!db) {
+    throw new Error('Firestore not available');
+  }
   return doc(db, collectionName, docId);
 }
 
@@ -190,3 +195,19 @@ export function logFirestoreOperation(
     timestamp: new Date().toISOString()
   });
 }
+
+// Export common Firestore functions for convenience
+export {
+  collection,
+  doc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+  Timestamp
+};
