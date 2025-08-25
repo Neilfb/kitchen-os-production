@@ -7,7 +7,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If we reach this point, redirect to the default locale
-  // instead of calling notFound()
+  // This should only be reached for the root path '/'
+  // Redirect to default locale
   redirect('/en');
 }
