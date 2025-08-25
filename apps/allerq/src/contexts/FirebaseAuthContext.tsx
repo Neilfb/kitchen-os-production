@@ -58,6 +58,18 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
     try {
       console.log('[FirebaseAuth] Fetching user profile for:', firebaseUser.uid);
 
+      if (!db) {
+        console.warn('[FirebaseAuth] Firestore not available, using default role');
+        return {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          emailVerified: firebaseUser.emailVerified,
+          role: 'manager',
+          getIdToken: () => firebaseUser.getIdToken()
+        };
+      }
+
       const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       let role: UserRole = 'manager'; // Default role
 
@@ -101,6 +113,13 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
   };
 
   useEffect(() => {
+    // Only set up auth listener if auth is available (i.e., on client-side)
+    if (!auth) {
+      console.log('[FirebaseAuth] Auth not available (server-side), setting loading to false');
+      setLoading(false);
+      return;
+    }
+
     console.log('[FirebaseAuth] Setting up auth state listener');
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -129,6 +148,10 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
+
     try {
       console.log('[FirebaseAuth] Starting login for:', email);
       setLoading(true);
@@ -145,6 +168,10 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
   };
 
   const signup = async (email: string, password: string, displayName?: string) => {
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
+
     try {
       console.log('[FirebaseAuth] Starting signup for:', email);
       setLoading(true);
@@ -168,33 +195,30 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
   };
 
   const logout = async () => {
+    if (!auth) {
+      throw new Error('Firebase Auth not available');
+    }
+
     try {
       console.log('[FirebaseAuth] Starting logout');
-      setLoading(true);
-
       await signOut(auth);
       console.log('[FirebaseAuth] ✅ Logout successful');
-
     } catch (error: any) {
       console.error('[FirebaseAuth] Logout failed:', error);
       throw new Error(error.message || 'Logout failed');
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Role checking function
   const hasRole = (roleOrRoles: UserRole | UserRole[]): boolean => {
-    if (!user?.role) return false;
-    if (Array.isArray(roleOrRoles)) {
-      return roleOrRoles.includes(user.role);
-    }
-    return user.role === roleOrRoles;
+    if (!user || !user.role) return false;
+    
+    const roles = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
+    return roles.includes(user.role);
   };
 
   // Refresh user profile (useful after role changes)
   const refreshUserProfile = async (): Promise<void> => {
-    if (auth.currentUser) {
+    if (auth && auth.currentUser) {
       console.log('[FirebaseAuth] Refreshing user profile');
       const userWithProfile = await fetchUserProfile(auth.currentUser);
       setUser(userWithProfile);
