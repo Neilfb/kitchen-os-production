@@ -61,11 +61,13 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Match all routes except static files
+  // Simple matcher that avoids complex regex syntax
   matcher: [
-    // Match all routes except static files
-    '/((?¡_next|_vercel|api|favicon.ico|sitemap.xml|robots.txt).*))',
-    // Match all API routes
+    // Match root path
+    '/',
+    // Match locale paths
+    '/(en|es)/:path*',
+    // Match API routes
     '/api/:path*'
   ]
 }
