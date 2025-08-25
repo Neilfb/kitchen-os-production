@@ -1,6 +1,4 @@
-import { redirect } from 'next/navigation';
+// This file is intentionally empty to prevent conflicts with root layout
+// All routing is handled by middleware and layouts
 
-// Root page redirects to default locale
-export default function RootPage() {
-  redirect('/en');
-}
+// No export - this prevents Next.js from treating this as a valid page
