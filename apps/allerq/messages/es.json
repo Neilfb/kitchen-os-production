@@ -1,0 +1,29 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "create": "Crear",
+    "view": "Ver",
+    "download": "Descargar",
+    "copy": "Copiar"
+  },
+  "navigation": {
+    "dashboard": "Tablero",
+    "restaurants": "Restaurantes",
+    "menus": "Menús",
+    "qrCodes": "Códigos QR",
+    "analytics": "Análisis",
+    "settings": "Configuración"
+  },
+  "qrCodes": {
+    "title": "Códigos QR",
+    "subtitle": "Genera y administra códigos QR para tus menús",
+    "create": "Crear Código QR",
+    "generate": "Generar Código QR",
+    "preview": "Vista Previa",
+    "customization": "Personalización"
+  }
+}
