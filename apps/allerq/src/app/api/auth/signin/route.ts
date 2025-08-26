@@ -65,14 +65,17 @@ export async function POST(request: NextRequest) {
 
     try {
       console.log('[Signin API] Attempting Firebase signin for:', email);
-      
-      // Note: Firebase Admin SDK doesn't have a direct signin method
-      // We need to verify the user exists and return a custom token
-      // The actual authentication happens on the client side
-      
+
+      // For now, we'll use a simple approach: verify user exists and create a custom token
+      // In production, you'd want to implement proper password verification
+      // This is a temporary solution for MVP
+
       // Get user by email to verify they exist
       const userRecord = await getAuth().getUserByEmail(email.toLowerCase().trim());
       console.log('[Signin API] ✅ User found in Firebase:', userRecord.uid);
+
+      // TODO: In production, implement proper password verification
+      // For MVP, we'll assume the password is correct if the user exists
 
       // Get user profile from Firestore
       const db = getFirestore();

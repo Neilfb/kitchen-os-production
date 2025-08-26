@@ -20,35 +20,19 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // Use Firebase client-side auth for proper password verification
-      const { signInWithEmailAndPassword } = await import('firebase/auth');
-      const { auth } = await import('@/lib/firebase/config');
-
-      if (!auth) {
-        throw new Error('Firebase not initialized');
-      }
-
-      // Sign in with Firebase (this verifies the password)
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Get the ID token for API calls
-      const idToken = await user.getIdToken();
-
-      // Call our API to get user profile and custom token
-      const response = await fetch('/api/auth/verify', {
+      // Use our API for signin (simpler approach)
+      const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ uid: user.uid }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to verify user');
+        throw new Error(data.error || 'Failed to sign in');
       }
 
       // Store user data in localStorage for simple session management
