@@ -107,7 +107,7 @@ export default function DashboardPage() {
               </div>
               <div className="bg-gray-50 px-5 py-3">
                 <div className="text-sm">
-                  <Link href="/restaurants" className="font-medium text-blue-600 hover:text-blue-500">
+                  <Link href="/en/restaurants" className="font-medium text-blue-600 hover:text-blue-500">
                     View restaurants
                   </Link>
                 </div>
@@ -189,10 +189,10 @@ export default function DashboardPage() {
               </div>
               <div className="mt-5">
                 <Link
-                  href="/restaurants/new"
+                  href="/en/restaurants"
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  Add Your First Restaurant
+                  Manage Restaurants
                 </Link>
               </div>
             </div>
