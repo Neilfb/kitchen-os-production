@@ -1,26 +1,45 @@
 'use client';
 
-import { useFirebaseAuth } from '@/contexts/FirebaseAuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 // Force dynamic rendering to prevent prerendering issues
 export const dynamic = 'force-dynamic';
 
+interface User {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: string;
+}
+
 export default function DashboardPage() {
-  const { user, loading, signOut } = useFirebaseAuth();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Check for user in localStorage
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    } else {
       router.push('/auth/login');
     }
-  }, [user, loading, router]);
+    setLoading(false);
+  }, [router]);
 
   const handleSignOut = async () => {
     try {
-      await signOut();
+      // Call signout API
+      await fetch('/api/auth/signout', { method: 'POST' });
+
+      // Clear localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('customToken');
+
+      // Redirect to home
       router.push('/en');
     } catch (error) {
       console.error('Error signing out:', error);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,33 +14,7 @@ function SignupForm() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
-  const [signUpFunction, setSignUpFunction] = useState<any>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    // Only load Firebase Auth on the client
-    const loadAuth = async () => {
-      try {
-        const { auth } = await import('@/lib/firebase/config');
-        const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-
-        setSignUpFunction(() => async (email: string, password: string, displayName?: string) => {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          if (displayName && userCredential.user) {
-            await updateProfile(userCredential.user, { displayName });
-          }
-          return userCredential;
-        });
-        setAuthReady(true);
-      } catch (error) {
-        console.error('Failed to load Firebase Auth:', error);
-        setError('Authentication system not available');
-      }
-    };
-
-    loadAuth();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,15 +30,28 @@ function SignupForm() {
       return;
     }
 
-    if (!signUpFunction) {
-      setError('Authentication not ready. Please wait...');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      await signUpFunction(email, password, name);
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create account');
+      }
+
+      // Store user data in localStorage for simple session management
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('customToken', data.customToken);
+
+      // Redirect to dashboard
       router.push('/en/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
@@ -72,17 +59,6 @@ function SignupForm() {
       setLoading(false);
     }
   };
-
-  if (!authReady) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading authentication...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50">
