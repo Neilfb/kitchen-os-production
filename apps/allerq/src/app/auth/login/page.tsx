@@ -1,29 +1,55 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ClientAuthProvider } from '@/components/providers/ClientAuthProvider';
-import { useFirebaseAuth } from '@/contexts/FirebaseAuthContext';
 
 // Force dynamic rendering to prevent prerendering issues
 export const dynamic = 'force-dynamic';
 
+// Completely client-side auth implementation
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useFirebaseAuth();
+  const [authReady, setAuthReady] = useState(false);
+  const [signInFunction, setSignInFunction] = useState<any>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    // Only load Firebase Auth on the client
+    const loadAuth = async () => {
+      try {
+        const { auth } = await import('@/lib/firebase/config');
+        const { signInWithEmailAndPassword } = await import('firebase/auth');
+
+        setSignInFunction(() => async (email: string, password: string) => {
+          return signInWithEmailAndPassword(auth, email, password);
+        });
+        setAuthReady(true);
+      } catch (error) {
+        console.error('Failed to load Firebase Auth:', error);
+        setError('Authentication system not available');
+      }
+    };
+
+    loadAuth();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!signInFunction) {
+      setError('Authentication not ready. Please wait...');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signIn(email, password);
+      await signInFunction(email, password);
       router.push('/en/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
@@ -31,6 +57,17 @@ function LoginForm() {
       setLoading(false);
     }
   };
+
+  if (!authReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -76,7 +113,7 @@ function LoginForm() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !signInFunction}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Signing in...' : 'Sign In'}
@@ -100,9 +137,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <ClientAuthProvider>
-      <LoginForm />
-    </ClientAuthProvider>
-  );
+  return <LoginForm />;
 }
