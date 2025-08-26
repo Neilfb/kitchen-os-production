@@ -71,7 +71,7 @@ export default function RestaurantsPage() {
   };
 
   const handleCreateRestaurant = () => {
-    router.push('/restaurants/new');
+    router.push('/en/restaurants/new');
   };
 
   if (loading) {
