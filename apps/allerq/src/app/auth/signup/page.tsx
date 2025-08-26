@@ -1,43 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ClientAuthProvider } from '@/components/providers/ClientAuthProvider';
+import { useFirebaseAuth } from '@/contexts/FirebaseAuthContext';
 
 // Force dynamic rendering to prevent prerendering issues
 export const dynamic = 'force-dynamic';
 
-// Client-only auth hook to prevent SSR issues
-function useClientAuth() {
-  const [auth, setAuth] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Only import and use Firebase Auth on the client
-    import('@/contexts/FirebaseAuthContext').then(({ useFirebaseAuth }) => {
-      try {
-        const authContext = useFirebaseAuth();
-        setAuth(authContext);
-      } catch (error) {
-        console.error('Auth context not available:', error);
-        setAuth({ signUp: null, user: null, loading: false });
-      } finally {
-        setLoading(false);
-      }
-    });
-  }, []);
-
-  return { ...auth, loading: loading || auth?.loading };
-}
-
-export default function SignupPage() {
+function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const { signUp, loading } = useClientAuth();
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useFirebaseAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,12 +33,7 @@ export default function SignupPage() {
       return;
     }
 
-    if (!signUp) {
-      setError('Authentication not available. Please refresh the page.');
-      return;
-    }
-
-    setSubmitLoading(true);
+    setLoading(true);
 
     try {
       await signUp(email, password, name);
@@ -67,21 +41,9 @@ export default function SignupPage() {
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
-      setSubmitLoading(false);
+      setLoading(false);
     }
   };
-
-  // Show loading state while auth is initializing
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -157,10 +119,10 @@ export default function SignupPage() {
 
           <button
             type="submit"
-            disabled={submitLoading || !signUp}
+            disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitLoading ? 'Creating account...' : 'Create Account'}
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
@@ -177,5 +139,13 @@ export default function SignupPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <ClientAuthProvider>
+      <SignupForm />
+    </ClientAuthProvider>
   );
 }
