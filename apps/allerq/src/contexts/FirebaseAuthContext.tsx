@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
+import {
   User,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,9 +9,8 @@ import {
   onAuthStateChanged,
   updateProfile
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { auth, db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/firestore';
 
 // Stage-1 MVP Role definitions (as per PROJECT_OVERVIEW.md)
 export type UserRole = 'superadmin' | 'admin' | 'manager';
@@ -113,9 +112,16 @@ export function FirebaseAuthProvider({ children }: FirebaseAuthProviderProps) {
   };
 
   useEffect(() => {
-    // Only set up auth listener if auth is available (i.e., on client-side)
+    // Only set up auth listener if we're on the client side
+    if (typeof window === 'undefined') {
+      console.log('[FirebaseAuth] Server-side environment, skipping auth setup');
+      setLoading(false);
+      return;
+    }
+
+    // Only set up auth listener if auth is available
     if (!auth) {
-      console.log('[FirebaseAuth] Auth not available (server-side), setting loading to false');
+      console.log('[FirebaseAuth] Auth not available, setting loading to false');
       setLoading(false);
       return;
     }

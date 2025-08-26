@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import { FirebaseAuthProvider } from "@/contexts/FirebaseAuthContext";
+import { ClientAuthProvider } from "@/components/providers/ClientAuthProvider";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -44,10 +44,10 @@ export default async function LocaleLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextIntlClientProvider messages={messages}>
-          <FirebaseAuthProvider>
+          <ClientAuthProvider>
             {children}
             <Toaster />
-          </FirebaseAuthProvider>
+          </ClientAuthProvider>
         </NextIntlClientProvider>
       </body>
     </html>
