@@ -33,18 +33,40 @@ function SignupForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signup', {
+      // Use Firebase client-side auth for account creation
+      const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase/config');
+
+      if (!auth) {
+        throw new Error('Firebase not initialized');
+      }
+
+      // Create user with Firebase
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Update display name
+      if (name) {
+        await updateProfile(user, { displayName: name });
+      }
+
+      // Get the ID token for API calls
+      const idToken = await user.getIdToken();
+
+      // Call our API to create user profile and get custom token
+      const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ uid: user.uid }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create account');
+        throw new Error(data.error || 'Failed to create user profile');
       }
 
       // Store user data in localStorage for simple session management
@@ -54,6 +76,7 @@ function SignupForm() {
       // Redirect to dashboard
       router.push('/en/dashboard');
     } catch (err: any) {
+      console.error('Signup error:', err);
       setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);

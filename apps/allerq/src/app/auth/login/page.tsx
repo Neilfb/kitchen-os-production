@@ -20,18 +20,35 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signin', {
+      // Use Firebase client-side auth for proper password verification
+      const { signInWithEmailAndPassword } = await import('firebase/auth');
+      const { auth } = await import('@/lib/firebase/config');
+
+      if (!auth) {
+        throw new Error('Firebase not initialized');
+      }
+
+      // Sign in with Firebase (this verifies the password)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // Get the ID token for API calls
+      const idToken = await user.getIdToken();
+
+      // Call our API to get user profile and custom token
+      const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ uid: user.uid }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to sign in');
+        throw new Error(data.error || 'Failed to verify user');
       }
 
       // Store user data in localStorage for simple session management
@@ -41,6 +58,7 @@ function LoginForm() {
       // Redirect to dashboard
       router.push('/en/dashboard');
     } catch (err: any) {
+      console.error('Login error:', err);
       setError(err.message || 'Failed to sign in');
     } finally {
       setLoading(false);
